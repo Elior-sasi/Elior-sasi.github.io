@@ -1,5 +1,5 @@
 /* TAB — service worker: offline app shell + push notifications */
-var CACHE='tab-shell-v1';
+var CACHE='tab-shell-v2';
 
 /* ---- offline shell ---- */
 self.addEventListener('install',function(e){
@@ -18,9 +18,9 @@ self.addEventListener('fetch',function(e){
   if(url.origin!==self.location.origin)return;            // Firebase/Google/etc. pass straight through
   var isDoc=req.mode==='navigate'||(req.headers.get('accept')||'').indexOf('text/html')>=0;
   if(isDoc){
-    // network-first: online users always get the freshest upload; offline falls back to the last cached copy
+    // network-first, bypassing the browser HTTP cache so a fresh upload always wins; offline falls back to the last cached copy
     e.respondWith(
-      fetch(req).then(function(res){var copy=res.clone();caches.open(CACHE).then(function(c){c.put('./index.html',copy);});return res;})
+      fetch(req,{cache:'no-store'}).then(function(res){var copy=res.clone();caches.open(CACHE).then(function(c){c.put('./index.html',copy);});return res;})
         .catch(function(){return caches.match('./index.html').then(function(m){return m||caches.match('./');});})
     );
     return;
